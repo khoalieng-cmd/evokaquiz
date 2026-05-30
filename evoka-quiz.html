@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Evoka Foundation — Financial Literacy Quiz</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f7f7f5; color: #111; min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 2rem 1rem; }
+  .card { background: #fff; border-radius: 16px; border: 1px solid #e8e8e4; padding: 2.5rem; width: 100%; max-width: 640px; }
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 100px; font-size: 12px; font-weight: 500; margin-bottom: 1.25rem; background: #E1F5EE; color: #0F6E56; }
+  h1 { font-size: 26px; font-weight: 600; color: #111; line-height: 1.3; margin-bottom: 0.5rem; }
+  .subtitle { font-size: 15px; color: #555; margin-bottom: 1.75rem; line-height: 1.6; }
+  label { font-size: 14px; color: #555; display: block; margin-bottom: 6px; }
+  .name-input { width: 100%; padding: 12px 14px; font-size: 16px; border: 1px solid #ddd; border-radius: 8px; background: #fff; color: #111; outline: none; margin-bottom: 1rem; transition: border-color 0.15s; }
+  .name-input:focus { border-color: #1D9E75; }
+  .btn-primary { padding: 12px 28px; background: #1D9E75; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 500; cursor: pointer; transition: background 0.15s; }
+  .btn-primary:hover { background: #0F6E56; }
+  .btn-secondary { padding: 10px 20px; background: transparent; color: #666; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; cursor: pointer; transition: background 0.15s; }
+  .btn-secondary:hover { background: #f5f5f5; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .section-title { font-size: 12px; font-weight: 500; color: #999; text-transform: uppercase; letter-spacing: 0.07em; margin: 1.75rem 0 0.75rem; }
+  .progress-bg { height: 4px; background: #eee; border-radius: 2px; margin-bottom: 2rem; }
+  .progress-fill { height: 4px; background: #1D9E75; border-radius: 2px; transition: width 0.4s ease; }
+  .q-label { font-size: 12px; color: #aaa; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.5rem; }
+  .q-text { font-size: 18px; font-weight: 500; color: #111; line-height: 1.5; margin-bottom: 1.5rem; }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .opt { text-align: left; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 14px 16px; font-size: 15px; color: #111; cursor: pointer; transition: border-color 0.15s, background 0.15s; line-height: 1.4; width: 100%; }
+  .opt:hover:not(:disabled) { border-color: #1D9E75; background: #E1F5EE; color: #085041; }
+  .opt.correct { border-color: #1D9E75; background: #E1F5EE; color: #085041; }
+  .opt.wrong { border-color: #D85A30; background: #FAECE7; color: #4A1B0C; }
+  .opt:disabled { cursor: default; }
+  .feedback { margin-top: 1rem; padding: 12px 16px; border-radius: 8px; font-size: 14px; line-height: 1.5; display: none; }
+  .feedback.show { display: block; }
+  .feedback.correct { background: #E1F5EE; color: #085041; border: 1px solid #5DCAA5; }
+  .feedback.wrong { background: #FAECE7; color: #4A1B0C; border: 1px solid #F0997B; }
+  .next-btn { margin-top: 1.25rem; padding: 12px 24px; background: #1D9E75; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 500; cursor: pointer; display: none; }
+  .next-btn.show { display: inline-block; }
+  .next-btn:hover { background: #0F6E56; }
+  .score-row { display: flex; align-items: center; gap: 1.25rem; margin-bottom: 1.25rem; }
+  .score-circle { width: 100px; height: 100px; border-radius: 50%; border: 3px solid #1D9E75; display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; }
+  .score-num { font-size: 28px; font-weight: 600; color: #1D9E75; }
+  .score-den { font-size: 13px; color: #888; }
+  .result-level { font-size: 22px; font-weight: 600; color: #111; margin-bottom: 0.4rem; }
+  .result-pct { font-size: 14px; color: #888; }
+  .result-desc { font-size: 15px; color: #555; line-height: 1.6; margin-bottom: 1.5rem; }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .lb-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 0.5rem; }
+  .lb-table th { text-align: left; padding: 8px 12px; font-size: 12px; font-weight: 500; color: #999; border-bottom: 1px solid #eee; text-transform: uppercase; letter-spacing: 0.06em; }
+  .lb-table td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; color: #111; }
+  .lb-table tr:last-child td { border-bottom: none; }
+  .lb-table tr.highlight td { background: #E1F5EE; color: #085041; }
+  .rank { display: inline-block; width: 22px; height: 22px; border-radius: 50%; font-size: 11px; font-weight: 500; text-align: center; line-height: 22px; background: #f0f0f0; color: #666; }
+  .rank-1 { background: #FAC775; color: #412402; }
+  .rank-2 { background: #D3D1C7; color: #2C2C2A; }
+  .rank-3 { background: #F0997B; color: #4A1B0C; }
+  .empty { color: #bbb; font-size: 14px; text-align: center; padding: 2rem 0; }
+  .status { font-size: 13px; color: #aaa; margin: 0.75rem 0; min-height: 20px; }
+  .sub-note { font-size: 12px; color: #bbb; margin-top: 1rem; line-height: 1.5; }
+  @media (max-width: 480px) {
+    .card { padding: 1.5rem; }
+    h1 { font-size: 22px; }
+    .score-circle { width: 80px; height: 80px; }
+    .score-num { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+
+  <!-- ── START SCREEN ── -->
+  <div class="screen active" id="screen-start">
+    <div class="tag">Evoka Foundation</div>
+    <h1>Financial literacy quiz</h1>
+    <p class="subtitle">10 questions across budgeting, investing, superannuation, and credit. Takes about 3 minutes.</p>
+    <label for="name-input">Your name</label>
+    <input class="name-input" id="name-input" type="text" placeholder="e.g. Alex Chen" maxlength="40" />
+    <div><button class="btn-primary" onclick="startQuiz()">Start quiz</button></div>
+    <div class="section-title">Leaderboard</div>
+    <div id="start-lb"><div class="empty">Loading scores…</div></div>
+  </div>
+
+  <!-- ── QUIZ SCREEN ── -->
+  <div class="screen" id="screen-quiz">
+    <div class="progress-bg"><div class="progress-fill" id="prog" style="width:0%"></div></div>
+    <div class="q-label" id="q-label"></div>
+    <div class="q-text" id="q-text"></div>
+    <div class="options" id="options"></div>
+    <div class="feedback" id="feedback"></div>
+    <button class="next-btn" id="next-btn" onclick="nextQ()">Next question →</button>
+  </div>
+
+  <!-- ── RESULT SCREEN ── -->
+  <div class="screen" id="screen-result">
+    <div class="tag">Your result</div>
+    <div class="score-row">
+      <div class="score-circle"><span class="score-num" id="final-score">0</span><span class="score-den">/ 10</span></div>
+      <div><div class="result-level" id="result-level"></div><div class="result-pct" id="result-pct"></div></div>
+    </div>
+    <div class="result-desc" id="result-desc"></div>
+    <div class="status" id="save-status"></div>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="viewLB()">See leaderboard</button>
+      <button class="btn-secondary" onclick="retry()">Try again</button>
+    </div>
+  </div>
+
+  <!-- ── LEADERBOARD SCREEN ── -->
+  <div class="screen" id="screen-lb">
+    <div class="tag">Leaderboard</div>
+    <h1 style="margin-bottom:1.25rem;">All-time scores</h1>
+    <div id="full-lb"><div class="empty">Loading…</div></div>
+    <p class="sub-note">Scores are shared across all players in real time via JSONBin.</p>
+    <div class="btn-row" style="margin-top:1.25rem;">
+      <button class="btn-secondary" onclick="retry()">Take quiz again</button>
+      <button class="btn-secondary" onclick="clearScores()">Clear all scores</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ─────────────────────────────────────────────
+  // CONFIGURATION — replace these two values
+  // ─────────────────────────────────────────────
+  const JSONBIN_BIN_ID  = '6a1a3eddddf5aa59f776de6d';
+  const JSONBIN_API_KEY = '$2a$10$eEWor4rL1YyDqLaO1qG0CO1.3NC7KZwJpRjx6R8qTf1ogVSFu0bbO';
+  // ─────────────────────────────────────────────
+
+  const BASE_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+  const HEADERS  = { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_API_KEY };
+
+  let scores = [];
+  let lastId = null;
+
+  async function fetchScores() {
+    try {
+      const r = await fetch(BASE_URL + '/latest', { headers: HEADERS });
+      if (!r.ok) throw new Error('fetch failed');
+      const d = await r.json();
+      scores = Array.isArray(d.record) ? d.record : [];
+    } catch(e) { scores = []; }
+  }
+
+  async function pushScores() {
+    try {
+      await fetch(BASE_URL, {
+        method: 'PUT',
+        headers: HEADERS,
+        body: JSON.stringify(scores)
+      });
+    } catch(e) {}
+  }
+
+  function addScore(name, score) {
+    const id = Date.now() + Math.random();
+    lastId = id;
+    scores.push({ id, name, score, ts: Date.now() });
+  }
+
+  function sorted() {
+    return [...scores].sort((a,b) => b.score - a.score || a.ts - b.ts);
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // ── QUESTIONS ──
+  const questions = [
+    { q: "If you invest $10,000 at 7% compound interest per year, roughly how much will you have after 10 years?", opts: ["$13,000","$17,000","$19,700","$23,000"], a: 2, exp: "Compound interest means you earn interest on your interest. At 7% annually for 10 years, $10,000 grows to roughly $19,700 — much more than simple interest of $17,000." },
+    { q: "What is the current Superannuation Guarantee rate employers must contribute in Australia?", opts: ["9.5%","10.5%","11%","11.5%"], a: 3, exp: "The Super Guarantee reached 11.5% in July 2024 and rises to 12% in July 2025. Knowing your entitlement helps you check your employer is paying correctly." },
+    { q: "Which best describes 'diversification' in investing?", opts: ["Putting all money into the highest-returning asset","Spreading investments across asset classes to reduce risk","Buying and selling shares frequently to maximise gains","Keeping all savings in a high-interest bank account"], a: 1, exp: "Diversification reduces the risk that any single investment will significantly damage your overall portfolio. It manages risk — it doesn't maximise returns." },
+    { q: "If inflation is 4% and your savings account pays 2% interest, what is happening to the real value of your savings?", opts: ["Growing at 6%","Growing at 2%","Staying the same","Shrinking by about 2%"], a: 3, exp: "Real return = nominal interest rate minus inflation. At 2% interest and 4% inflation, your purchasing power is falling by roughly 2% per year." },
+    { q: "What is the recommended size for an emergency fund?", opts: ["One week of expenses","One month of expenses","3 to 6 months of essential expenses","One year of total income"], a: 2, exp: "Financial planners generally recommend 3–6 months of essential living costs in a liquid account — enough to cover job loss, medical bills, or major repairs." },
+    { q: "You have a $5,000 credit card debt at 20% p.a. and a $20,000 car loan at 7% p.a. Which should you prioritise?", opts: ["Car loan — it's a larger amount","Credit card — it has the higher interest rate","Pay both equally","Whichever has the lower repayments"], a: 1, exp: "Always pay the highest-interest debt first. The 20% credit card costs far more per dollar owed than the 7% car loan, even though the balance is smaller." },
+    { q: "What does a credit score primarily reflect?", opts: ["How much money you earn","Your total net worth","Your history of repaying debts on time","The amount of savings you hold"], a: 2, exp: "Credit scores are driven by repayment history, credit utilisation, and length of credit history. Income and wealth are not directly factored in." },
+    { q: "In Australia, what marginal tax rate applies to income between $45,001 and $135,000 in 2024–25?", opts: ["19%","32.5%","37%","45%"], a: 1, exp: "Under the 2024–25 tax brackets, income in this range is taxed at 32.5 cents in the dollar. This is your marginal rate — not what you pay on all income." },
+    { q: "What is 'dollar-cost averaging'?", opts: ["Buying investments only when markets are at their lowest","Investing a fixed dollar amount at regular intervals regardless of price","Converting all investments to cash during a downturn","Averaging out the cost of multiple currency exchanges"], a: 1, exp: "Dollar-cost averaging removes the need to time the market. By investing a fixed amount regularly, you automatically buy more units when prices are low." },
+    { q: "Which statement about term life insurance is correct?", opts: ["It builds cash value over time","It covers you for a set period and pays out only if you die during that term","It is the most expensive type of life insurance","It converts to superannuation on retirement"], a: 1, exp: "Term life insurance: pay a premium, be covered for a fixed period. No investment component — simpler and usually cheaper than whole-of-life products." }
+  ];
+
+  const levels = [
+    { min:0, max:3, label:"Building foundations", desc:"Financial literacy is a skill, not a gift — awareness is the first step. Evoka Life's free financial counselling is a great place to start." },
+    { min:4, max:6, label:"Getting there", desc:"Solid grounding in the basics. A few gaps in tax, investing, or debt strategy worth closing." },
+    { min:7, max:8, label:"Financially fluent", desc:"Strong knowledge across most areas. Well-placed to make good financial decisions — the edge is in execution." },
+    { min:9, max:10, label:"Financial literacy leader", desc:"Excellent. You understand not just the rules but the reasoning. Consider how you can share this with others." }
+  ];
+
+  function getLevel(s) { return levels.find(l => s >= l.min && s <= l.max); }
+
+  let qIdx = 0, score = 0, answered = false, playerName = '';
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  function renderLB(elId, hlId) {
+    const el = document.getElementById(elId);
+    const s = sorted().slice(0,20);
+    if (!s.length) { el.innerHTML = '<div class="empty">No scores yet. Be the first!</div>'; return; }
+    let h = '<table class="lb-table"><thead><tr><th style="width:36px">#</th><th>Name</th><th style="text-align:right">Score</th><th style="text-align:right">Level</th></tr></thead><tbody>';
+    s.forEach((e,i) => {
+      const hl = e.id === hlId ? ' class="highlight"' : '';
+      const rc = i < 3 ? ` rank-${i+1}` : '';
+      const lv = getLevel(e.score);
+      h += `<tr${hl}><td><span class="rank${rc}">${i+1}</span></td><td>${esc(e.name)}</td><td style="text-align:right;font-weight:600">${e.score}/10</td><td style="text-align:right;font-size:13px;color:#999">${lv.label}</td></tr>`;
+    });
+    el.innerHTML = h + '</tbody></table>';
+  }
+
+  async function startQuiz() {
+    const n = document.getElementById('name-input').value.trim();
+    if (!n) { document.getElementById('name-input').focus(); return; }
+    playerName = n; qIdx = 0; score = 0; answered = false; lastId = null;
+    showScreen('screen-quiz');
+    renderQ();
+  }
+
+  function renderQ() {
+    const q = questions[qIdx];
+    document.getElementById('prog').style.width = ((qIdx / questions.length) * 100) + '%';
+    document.getElementById('q-label').textContent = `Question ${qIdx+1} of ${questions.length}`;
+    document.getElementById('q-text').textContent = q.q;
+    const fb = document.getElementById('feedback');
+    fb.className = 'feedback'; fb.textContent = '';
+    document.getElementById('next-btn').className = 'next-btn';
+    answered = false;
+    const ol = document.getElementById('options');
+    ol.innerHTML = '';
+    q.opts.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'opt';
+      btn.textContent = opt;
+      btn.onclick = () => selectA(i);
+      ol.appendChild(btn);
+    });
+  }
+
+  function selectA(i) {
+    if (answered) return;
+    answered = true;
+    const q = questions[qIdx];
+    const btns = document.querySelectorAll('.opt');
+    btns.forEach(b => b.disabled = true);
+    const fb = document.getElementById('feedback');
+    if (i === q.a) {
+      score++;
+      btns[i].classList.add('correct');
+      fb.className = 'feedback correct show';
+      fb.innerHTML = '<strong>Correct.</strong> ' + q.exp;
+    } else {
+      btns[i].classList.add('wrong');
+      btns[q.a].classList.add('correct');
+      fb.className = 'feedback wrong show';
+      fb.innerHTML = '<strong>Not quite.</strong> ' + q.exp;
+    }
+    const nb = document.getElementById('next-btn');
+    nb.className = 'next-btn show';
+    nb.textContent = qIdx === questions.length-1 ? 'See my result →' : 'Next question →';
+  }
+
+  function nextQ() {
+    qIdx++;
+    if (qIdx >= questions.length) finishQuiz();
+    else renderQ();
+  }
+
+  async function finishQuiz() {
+    addScore(playerName, score);
+    document.getElementById('final-score').textContent = score;
+    const lv = getLevel(score);
+    document.getElementById('result-level').textContent = lv.label;
+    document.getElementById('result-pct').textContent = `${score * 10}% correct`;
+    document.getElementById('result-desc').textContent = lv.desc;
+    showScreen('screen-result');
+    const st = document.getElementById('save-status');
+    st.textContent = 'Saving your score…';
+    await pushScores();
+    st.textContent = 'Score saved to the shared leaderboard.';
+  }
+
+  async function viewLB() {
+    showScreen('screen-lb');
+    document.getElementById('full-lb').innerHTML = '<div class="empty">Loading…</div>';
+    await fetchScores();
+    renderLB('full-lb', lastId);
+  }
+
+  async function retry() {
+    qIdx = 0; score = 0; answered = false; lastId = null;
+    showScreen('screen-start');
+    document.getElementById('start-lb').innerHTML = '<div class="empty">Loading…</div>';
+    await fetchScores();
+    renderLB('start-lb', null);
+  }
+
+  async function clearScores() {
+    if (!confirm('Clear all scores from the leaderboard?')) return;
+    scores = [];
+    await pushScores();
+    renderLB('full-lb', null);
+  }
+
+  // Init
+  fetchScores().then(() => renderLB('start-lb', null));
+</script>
+</body>
+</html>
